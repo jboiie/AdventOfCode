@@ -1,0 +1,1 @@
+Codes and solutions for advent of code 2025

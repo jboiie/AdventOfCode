@@ -21,7 +21,7 @@ class DSU:
 
 
 def main():
-    # Read points from input.txt (same folder)
+    # Read points from input.txt
     with open("input.txt") as f:
         points = [tuple(map(int, line.strip().split(",")))
                   for line in f if line.strip()]
@@ -32,7 +32,7 @@ def main():
     ys = [p[1] for p in points]
     zs = [p[2] for p in points]
 
-    # Build all pairwise distances
+    # Build all pairwise distances once
     dists = []
     append = dists.append
 
@@ -47,29 +47,56 @@ def main():
     # Sort by distance
     dists.sort()
 
-    dsu = DSU(n)
-
-    # ✅ Correct: connect the 1000 *closest pairs*, regardless of whether
-    # they actually merge two different circuits or not.
+    # ------------------------
+    # Part 1
+    # ------------------------
+    dsu1 = DSU(n)
     pairs_considered = 0
+
     for _, i, j in dists:
-        dsu.union(i, j)        # we don't care if it was a no-op
+        dsu1.union(i, j)      # we always "connect" this pair, even if it's a no-op
         pairs_considered += 1
         if pairs_considered == 1000:
             break
 
-    # Count sizes of circuits (connected components)
-    comp = {}
+    # Component sizes after 1000 pairs considered
+    comp_sizes = {}
     for i in range(n):
-        root = dsu.find(i)
-        comp[root] = comp.get(root, 0) + 1
+        root = dsu1.find(i)
+        comp_sizes[root] = comp_sizes.get(root, 0) + 1
 
-    sizes = sorted(comp.values(), reverse=True)
-
+    sizes = sorted(comp_sizes.values(), reverse=True)
     if len(sizes) < 3:
-        raise ValueError(f"Expected at least 3 circuits, got {len(sizes)}: {sizes}")
+        raise ValueError(f"Expected at least 3 circuits for part 1, got {len(sizes)}: {sizes}")
 
-    print(sizes[0] * sizes[1] * sizes[2])
+    part1 = sizes[0] * sizes[1] * sizes[2]
+
+    # ------------------------
+    # Part 2
+    # ------------------------
+    dsu2 = DSU(n)
+    components = n
+    last_i = last_j = None
+
+    for _, i, j in dists:
+        # Only real merges reduce the number of components
+        if dsu2.union(i, j):
+            components -= 1
+            last_i, last_j = i, j
+            if components == 1:
+                break
+
+    if last_i is None or last_j is None:
+        raise ValueError("Graph never became fully connected in part 2.")
+
+    # Multiply X coordinates of the last two boxes that were actually connected
+    x1 = xs[last_i]
+    x2 = xs[last_j]
+    part2 = x1 * x2
+
+    # Print answers (you can adjust formatting as you like)
+    print(part1)
+    print(part2)
 
 
 if __name__ == "__main__":
